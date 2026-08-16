@@ -1,0 +1,4 @@
+split,rows,unique_words,split_groups,avg_definition_words
+test,17480,10861,10300,11.94
+train,137362,87122,82454,11.75
+valid,17144,10856,10288,11.4
