@@ -1,0 +1,2 @@
+model,subset_fraction,num_initial_subset_rows,num_cross_reference_rows_removed,num_subset_rows,num_evaluable_queries,num_candidate_words,accuracy_at_1,accuracy_at_10,accuracy_at_100,median_rank
+SIF_local_svd,0.1,14041,720,13321,13321,11831,0.0740184670820509,0.10922603408152541,0.16124915546880864,3830.0
