@@ -1,21 +1,21 @@
 query_word,query_definition,predicted_word,correct_rank,top_score,target_score,headword_in_def
-A-tiptoe,On tiptoe; eagerly expecting.,a-tiptoe,1.0,0.9764621257781982,0.9764621257781982,False
-Abaist,Abashed; confounded; discomfited.,abaist,1.0,0.9563533067703247,0.9563533067703247,False
-Abandon,A complete giving up to natural impulses; freedom from artificial constraint; careless freedom or ease.,stimulus,44.0,0.7451013326644897,0.6175103187561035,False
-Abandon,Abandonment; relinquishment.,quotha,395.0,0.8105719089508057,0.5549384951591492,False
-Abandon,Reflexively: To give (one's self) up without attempt at self-control; to yield (one's self) unrestrainedly; -- often in a bad sense.,mercurified,227.0,0.7905393838882446,0.6057996153831482,False
-Abandon,To cast or drive out; to banish; to expel; to reject.,deprive,383.0,0.904266357421875,0.6024355888366699,False
-Abandon,To give up absolutely; to forsake entirely ; to renounce utterly; to relinquish all connection with or concern on; to desert as a person to whom one owes allegiance or fidelity; to quit; to surrender.,abandon,1.0,0.8436627984046936,0.8436627984046936,False
-Abandon,To relinquish all claim to; -- used when an insured person gives up to underwriters all claim to the property covered by a policy which may remain after loss or damage by a peril insured against.,abandon,1.0,0.778032124042511,0.778032124042511,False
-Abandonment,Careless freedom or ease; abandon.,hopeless,228.0,0.8090384602546692,0.6300199031829834,False
-Abandonment,The act of abandoning or the state of being abandoned; total desertion; relinquishment.,beholdingness,192.0,0.8156286478042603,0.5836250185966492,False
-Abandonment,The relinquishment by the insured to the underwriters of what may remain of the property insured after a loss or damage by a peril insured against.,photometer,6.0,0.7489786148071289,0.6682328581809998,False
-Abandonment,The relinquishment of a right claim or privilege as to mill site etc.,denial,17.0,0.7807410359382629,0.7017595171928406,False
-Abandonment,The voluntary leaving of a person to whom one is bound by a special relation as a wife husband or child; desertion.,debt,185.0,0.7732481956481934,0.6244565844535828,False
-Abasedly,Abjectly; downcastly.,abasedly,9.5,0.8370227813720703,0.8370227813720703,False
-Abash,To destroy the self-possession of; to confuse or confound as by exciting suddenly a consciousness of guilt mistake or inferiority; to put to shame; to disconcert; to discomfit.,abash,1.0,0.8569766879081726,0.8569766879081726,False
-Abbreviate,Abbreviated; abridged; shortened.,letch,2490.0,0.826315701007843,0.4671996533870697,False
-Abbreviate,An abridgment.,appendication,11515.0,0.7610086798667908,0.23330619931221008,False
-Abbreviate,Having one part relatively shorter than another or than the ordinary type.,unipersonal,8256.0,0.8159847259521484,0.30282384157180786,False
-Abbreviate,To make briefer; to shorten; to abridge; to reduce by contraction or omission especially of words written or spoken.,facilitate,235.0,0.8085964322090149,0.6021896004676819,False
-Abbreviate,To reduce to lower terms as a fraction.,disembody,121.0,0.8334965109825134,0.5928435325622559,False
+a,The name of the sixth tone in the model major scale (that in C) or the first tone of the minor scale which is named after it the scale in A minor. The second string of the violin is tuned to the A in the treble staff. -- A sharp (A/) is the name of a musical tone intermediate between A and B. -- A flat (A/) is the name of a tone intermediate between A and G.,extremity,90.0,0.7615384459495544,0.7192814350128174,True
+a b c,The simplest rudiments of any subject; as the A B C of finance.,marchioness,8.0,0.8487557768821716,0.8324970602989197,True
+a cappella,In church or chapel style; -- said of compositions sung in the old church style without instrumental accompaniment; as a mass a capella i. e. a mass purely vocal.,mournival,11283.0,0.8266507983207703,0.4480089545249939,False
+a posteriori,Characterizing that kind of reasoning which derives propositions from the observation of facts or by generalizations from facts arrives at principles and definitions or infers causes from effects. This is the reverse of a priori reasoning.,repugnant,40.0,0.8733600974082947,0.8366518616676331,False
+a priori,Characterizing that kind of reasoning which deduces consequences from definitions formed or principles assumed or which infers effects from causes previously known; deductive or deductively. The reverse of a posteriori.,prudential,22.0,0.8815868496894836,0.8496659994125366,False
+aaron's rod,A rod with one serpent twined around it thus differing from the caduceus of Mercury which has two.,coral-rag,33.0,0.8870481848716736,0.8664597868919373,False
+aback,Toward the back or rear; backward.,calculated,3269.0,0.8573296666145325,0.593449056148529,False
+abacus,The uppermost member or division of the capital of a column immediately under the architrave. See Column.,articulus,2417.0,0.7705531120300293,0.6299022436141968,False
+abaddon,The destroyer or angel of the bottomless pit; -- the same as Apollyon and Asmodeus.,nates,16924.0,0.8107752799987793,0.4391334354877472,False
+abaft,Toward the stern; aft; as to go abaft.,abaft,1.0,0.8823195695877075,0.8823195695877075,True
+abalienate,To transfer the title of from one to another; to alienate.,adeem,1358.0,0.7887789607048035,0.6280336380004883,False
+aband,To banish; to expel.,unlive,22.0,0.79421466588974,0.7764471769332886,False
+abandon,To relinquish all claim to; -- used when an insured person gives up to underwriters all claim to the property covered by a policy which may remain after loss or damage by a peril insured against.,assume,1025.0,0.8003788590431213,0.683744490146637,False
+abandoned,Self-abandoned or given up to vice; extremely wicked or sinning without restraint; irreclaimably wicked ; as an abandoned villain.,chargeable,654.0,0.9053300023078918,0.7847771644592285,True
+abandonment,The voluntary leaving of a person to whom one is bound by a special relation as a wife husband or child; desertion.,estoppel,955.0,0.8495847582817078,0.676668107509613,False
+abase,To lower or depress; to throw or cast down; as to abase the eye.,disseminate,44.0,0.8005546927452087,0.7651515007019043,True
+abased,of Abase,abasing,615.0,0.8477929830551147,0.7725365161895752,False
+abate,To reduce in estimation; to deprive.,evacuate,620.0,0.8240509629249573,0.7152762413024902,False
+abatement,The entry of a stranger without right into a freehold after the death of the last possessor before the heir or devisee.,enactment,97.0,0.850835919380188,0.7979293465614319,False
+abator,One who abates a nuisance.,libelant,64.0,0.8725712299346924,0.8466902375221252,False

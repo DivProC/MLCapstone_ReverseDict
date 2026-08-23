@@ -50,7 +50,7 @@ EPOCHS      = 30
 LR          = 1e-3
 TEMPERATURE = 0.07
 PATIENCE    = 4
-INDEX_EVERY = 5   # rebuild word index every N epochs
+INDEX_EVERY = 1   # rebuild word index every epoch for accurate checkpoint selection
 
 
 def get_device() -> torch.device:
@@ -66,9 +66,13 @@ def contrastive_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch.Ten
 
 
 def load_all_defs(vocab: Vocabulary) -> dict[str, list[list[int]]]:
-    """Load encoded definitions for every word across all three splits."""
+    """
+    Load encoded definitions for the word index used during training validation.
+    Intentionally excludes opted_test.csv so test-split definitions never
+    appear in the candidate index during training.
+    """
     all_defs: dict[str, list[list[int]]] = defaultdict(list)
-    for csv in [DATA_DIR/"opted_train.csv", DATA_DIR/"opted_valid.csv", DATA_DIR/"opted_test.csv"]:
+    for csv in [DATA_DIR/"opted_train.csv", DATA_DIR/"opted_valid.csv"]:
         df = pd.read_csv(csv, dtype=str, keep_default_na=False)
         df = df[df["is_unresolved_cross_reference"] != "True"]
         for _, row in df.iterrows():
