@@ -1,0 +1,23 @@
+{
+  "processed_dir": "data/processed",
+  "results_dir": "results/shared_pipeline",
+  "run_name": "sbert_retrieval_test",
+  "split_mode": "by-definition",
+  "eval_split": "test",
+  "encoder": "sentence-transformer",
+  "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "device": null,
+  "predictor": "none",
+  "ridge_alpha": 1.0,
+  "projection_epochs": 5,
+  "projection_batch_size": 256,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "use_augmented_train": false,
+  "random_seed": 42,
+  "encode_batch_size": 64,
+  "score_batch_size": 16,
+  "max_train_rows": 0,
+  "max_eval_rows": 0,
+  "plan_only": false
+}
