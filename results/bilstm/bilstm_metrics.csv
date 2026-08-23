@@ -1,0 +1,3 @@
+model,subset,num_queries,num_candidates,recall_at_1,recall_at_10,recall_at_100,median_rank
+BiLSTM,all_queries,17480,108839,0.4263157894736842,0.6441075514874142,0.778604118993135,1.5
+BiLSTM,headword_not_in_definition,14948,108839,0.4446079743109446,0.664035322451164,0.7851217554187851,1.5
