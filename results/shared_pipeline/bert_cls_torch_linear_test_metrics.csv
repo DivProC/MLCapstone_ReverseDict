@@ -1,3 +1,0 @@
-run_name,split_mode,eval_split,query_group,encoder,model_name,predictor,num_queries,queries_with_candidate_answer,candidate_pool_size,recall_at_1,recall_at_10,recall_at_100,median_rank
-bert_cls_torch_linear_test,by-definition,test,all_queries,bert-cls,bert-base-uncased,torch-linear,26051,26051,108839,0.06379793482016045,0.09473724617097232,0.15369851445242025,5596.0
-bert_cls_torch_linear_test,by-definition,test,no_headword_in_definition,bert-cls,bert-base-uncased,torch-linear,21154,21154,108839,0.0720431124137279,0.10177744161860641,0.1536352462891179,6258.5

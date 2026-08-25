@@ -1,0 +1,3 @@
+run_name,split_mode,eval_split,query_group,encoder,model_name,predictor,metric_family,num_queries,queries_with_candidate_answer,candidate_pool_size,recall_at_1,recall_at_10,recall_at_100,median_rank
+sbert_none_test,by-definition,test,all_queries,sentence-transformer,sentence-transformers/all-MiniLM-L6-v2,none,tie_aware_recall_at_k,26051,26051,108839,0.08620735090448345,0.23653654339808422,0.4391826655041119,156.0
+sbert_none_test,by-definition,test,no_headword_in_definition,sentence-transformer,sentence-transformers/all-MiniLM-L6-v2,none,tie_aware_recall_at_k,21154,21154,108839,0.08687694248226535,0.22554359489218143,0.41322242331744075,208.0
