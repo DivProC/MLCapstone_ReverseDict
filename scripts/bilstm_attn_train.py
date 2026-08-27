@@ -7,7 +7,7 @@ Loss: symmetric in-batch contrastive (CLIP-style, temperature-scaled).
 
 Usage:
     cd <project root>
-    python3 -u scripts/bilstm_train.py
+    python3 -u scripts/bilstm_attn_train.py
 """
 from __future__ import annotations
 

@@ -22,7 +22,7 @@ Query set      : all words with >= 2 definitions (~24,792 words).
 
 Usage:
     cd <project root>
-    python3 scripts/bilstm_eval.py
+    python3 scripts/bilstm_attn_eval.py
 """
 from __future__ import annotations
 
