@@ -1,0 +1,2 @@
+epoch,train_loss,val_r1,val_r10,val_r100,val_median_rank,epoch_secs
+1,5.350489,0.000000,0.000229,0.007677,10513.0,1374.4
