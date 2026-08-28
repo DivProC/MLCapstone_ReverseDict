@@ -1,21 +1,21 @@
 query_word,query_definition,predicted_word,correct_rank,top_score,target_score,headword_in_def
-a,The name of the sixth tone in the model major scale (that in C) or the first tone of the minor scale which is named after it the scale in A minor. The second string of the violin is tuned to the A in the treble staff. -- A sharp (A/) is the name of a musical tone intermediate between A and B. -- A flat (A/) is the name of a tone intermediate between A and G.,x,241.0,0.7929900288581848,0.7372495532035828,True
-a b c,The simplest rudiments of any subject; as the A B C of finance.,crown office,38.0,0.8302183747291565,0.8032232522964478,True
-a cappella,In church or chapel style; -- said of compositions sung in the old church style without instrumental accompaniment; as a mass a capella i. e. a mass purely vocal.,whereat,4468.0,0.8620993494987488,0.6417580842971802,False
-a posteriori,Characterizing that kind of reasoning which derives propositions from the observation of facts or by generalizations from facts arrives at principles and definitions or infers causes from effects. This is the reverse of a priori reasoning.,equivocal,3.0,0.8599806427955627,0.8593626022338867,False
-a priori,Characterizing that kind of reasoning which deduces consequences from definitions formed or principles assumed or which infers effects from causes previously known; deductive or deductively. The reverse of a posteriori.,recoverable,31.0,0.9308286905288696,0.8963909149169922,False
-aaron's rod,A rod with one serpent twined around it thus differing from the caduceus of Mercury which has two.,megasthene,212.0,0.8135186433792114,0.761427104473114,False
-aback,Toward the back or rear; backward.,exchangeably,4100.0,0.8300013542175293,0.5817866921424866,False
-abacus,The uppermost member or division of the capital of a column immediately under the architrave. See Column.,circar,9846.0,0.8019315004348755,0.47608137130737305,False
-abaddon,The destroyer or angel of the bottomless pit; -- the same as Apollyon and Asmodeus.,ectoblast,24608.0,0.9074134826660156,0.22601471841335297,False
-abaft,Toward the stern; aft; as to go abaft.,epaxial,4.0,0.9275839924812317,0.9182921648025513,True
-abalienate,To transfer the title of from one to another; to alienate.,tightener,7268.0,0.7028105854988098,0.48847925662994385,False
-aband,To banish; to expel.,mistrial,19.0,0.7811836004257202,0.7686256170272827,False
-abandon,To relinquish all claim to; -- used when an insured person gives up to underwriters all claim to the property covered by a policy which may remain after loss or damage by a peril insured against.,egoity,865.0,0.747870922088623,0.6601356863975525,False
-abandoned,Self-abandoned or given up to vice; extremely wicked or sinning without restraint; irreclaimably wicked ; as an abandoned villain.,misgoverned,1119.0,0.8254642486572266,0.7126352190971375,True
-abandonment,The voluntary leaving of a person to whom one is bound by a special relation as a wife husband or child; desertion.,voucher,6676.0,0.7285863757133484,0.5127347111701965,False
-abase,To lower or depress; to throw or cast down; as to abase the eye.,meritot,148.0,0.752316415309906,0.7081973552703857,True
-abased,of Abase,intervened,30.0,0.9017254710197449,0.8852163553237915,False
-abate,To reduce in estimation; to deprive.,gasify,295.0,0.8969916105270386,0.7622871398925781,False
-abatement,The entry of a stranger without right into a freehold after the death of the last possessor before the heir or devisee.,evocation,46.0,0.8516501188278198,0.812755823135376,False
-abator,One who abates a nuisance.,egger,33.0,0.9586505889892578,0.931060791015625,False
+a,The name of the sixth tone in the model major scale (that in C) or the first tone of the minor scale which is named after it the scale in A minor. The second string of the violin is tuned to the A in the treble staff. -- A sharp (A/) is the name of a musical tone intermediate between A and B. -- A flat (A/) is the name of a tone intermediate between A and G.,guaranine,2036.0,0.8313567042350769,0.7699521780014038,True
+a b c,The simplest rudiments of any subject; as the A B C of finance.,digenea,21.0,0.8121889233589172,0.7927801012992859,True
+a cappella,In church or chapel style; -- said of compositions sung in the old church style without instrumental accompaniment; as a mass a capella i. e. a mass purely vocal.,creux,4637.0,0.7865829467773438,0.6140903830528259,False
+a posteriori,Characterizing that kind of reasoning which derives propositions from the observation of facts or by generalizations from facts arrives at principles and definitions or infers causes from effects. This is the reverse of a priori reasoning.,bipartible,49.0,0.9184408783912659,0.8666477799415588,False
+a priori,Characterizing that kind of reasoning which deduces consequences from definitions formed or principles assumed or which infers effects from causes previously known; deductive or deductively. The reverse of a posteriori.,sonties,17.0,0.9398152232170105,0.9301770329475403,False
+aaron's rod,A rod with one serpent twined around it thus differing from the caduceus of Mercury which has two.,thuja,37.0,0.8315311074256897,0.810645341873169,False
+aback,Toward the back or rear; backward.,hereditarily,11089.0,0.8674648404121399,0.4154406487941742,False
+abacus,The uppermost member or division of the capital of a column immediately under the architrave. See Column.,gantlet,3560.0,0.8033093214035034,0.5881927609443665,False
+abaddon,The destroyer or angel of the bottomless pit; -- the same as Apollyon and Asmodeus.,karyomiton,29799.0,0.8494356274604797,0.3213028311729431,False
+abaft,Toward the stern; aft; as to go abaft.,bifoliolate,6.0,0.9742363691329956,0.9426079392433167,True
+abalienate,To transfer the title of from one to another; to alienate.,cross-examine,2400.0,0.8041363954544067,0.5540825128555298,False
+aband,To banish; to expel.,delude,109.0,0.834078848361969,0.778453528881073,False
+abandon,To relinquish all claim to; -- used when an insured person gives up to underwriters all claim to the property covered by a policy which may remain after loss or damage by a peril insured against.,disclaim,2261.0,0.8300771117210388,0.5677907466888428,False
+abandoned,Self-abandoned or given up to vice; extremely wicked or sinning without restraint; irreclaimably wicked ; as an abandoned villain.,stateless,238.0,0.82900470495224,0.7841162085533142,True
+abandonment,The voluntary leaving of a person to whom one is bound by a special relation as a wife husband or child; desertion.,acquaintance,6749.0,0.7508785724639893,0.48406335711479187,False
+abase,To lower or depress; to throw or cast down; as to abase the eye.,abase,1.0,0.8370173573493958,0.8370173573493958,True
+abased,of Abase,confidently,6.0,0.9178048372268677,0.8983593583106995,False
+abate,To reduce in estimation; to deprive.,outargue,235.0,0.8320544958114624,0.7215464115142822,False
+abatement,The entry of a stranger without right into a freehold after the death of the last possessor before the heir or devisee.,paramorphism,198.0,0.8411195874214172,0.7976034879684448,False
+abator,One who abates a nuisance.,savior,2.0,0.9677102565765381,0.9669482707977295,False

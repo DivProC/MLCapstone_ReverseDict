@@ -1,3 +1,3 @@
 model,subset,eval_protocol,num_queries,num_candidates,recall_at_1,recall_at_10,recall_at_100,median_rank
-BiLSTM_Attention,all_queries,by_definition_split,24792,108839,0.02250726040658277,0.12508067118425298,0.4153759277186189,165.0
-BiLSTM_Attention,headword_not_in_definition,by_definition_split,19801,108839,0.022120094944699763,0.12428665218928336,0.4100297964749255,170.0
+BiLSTM_Attention,all_queries,by_definition_split,24792,108839,0.02174088415617941,0.13258309131978058,0.43324459503065504,149.0
+BiLSTM_Attention,headword_not_in_definition,by_definition_split,19801,108839,0.019998989950002526,0.12878137467804657,0.4267966264330084,157.0
