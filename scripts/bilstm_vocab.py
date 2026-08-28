@@ -114,8 +114,18 @@ class Vocabulary:
 
     @staticmethod
     def load(path: Path) -> "Vocabulary":
+        # vocab.pkl may have been saved while bilstm_vocab was the __main__
+        # module, so pickle stores the class as __main__.Vocabulary.
+        # The custom unpickler remaps that to the live Vocabulary class so
+        # loading works regardless of how the module was invoked.
+        class _Unpickler(pickle.Unpickler):
+            def find_class(self, module, name):
+                if name == "Vocabulary":
+                    return Vocabulary
+                return super().find_class(module, name)
+
         with open(path, "rb") as f:
-            return pickle.load(f)
+            return _Unpickler(f).load()
 
     # ------------------------------------------------------------------
     # Stats
