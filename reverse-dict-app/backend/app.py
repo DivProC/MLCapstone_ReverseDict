@@ -9,6 +9,9 @@ static demo page, so Java/Gradle is not needed for the local demo.
   - "bert-cls"             -> bert_cls.py (needs `torch` + `transformers`)
   - "bilstm"               -> trained BiLSTM checkpoint
   - "bilstm_attn"          -> trained BiLSTM + attention checkpoint
+  - "defgen2"              -> DefGen2 checkpoint, trained on MultiRD English data
+  - "unified"              -> unifiedRevdicDefmod checkpoint, trained on MultiRD English data
+  - "multird"              -> MultiRD checkpoint, trained on MultiRD English data
 
 Run:
     pip install -r requirements.txt
@@ -96,6 +99,55 @@ BILSTM_CHECKPOINT_BY_ENCODER = {
     ).resolve(),
 }
 
+# DefGen2 / unifiedRevdicDefmod -- trained on MultiRD's English data (Capstone/kaggle_scripts/),
+# not OPTED, so they carry their own candidate index instead of sharing the OPTED target_index.
+MULTIRD_SPACE_DATA_DIR = Path(
+    os.environ.get(
+        "REVDICT_MULTIRD_DATA_DIR",
+        REPO_DIR.parent / "MultiRD_data" / "English" / "data",
+    )
+).resolve()
+MULTIRD_SPACE_CHECKPOINT_BY_ENCODER = {
+    "defgen2": Path(
+        os.environ.get(
+            "REVDICT_DEFGEN2_CHECKPOINT",
+            REPO_DIR.parent / "saved_models" / "DefGen2" / "model_v1.pt",
+        )
+    ).resolve(),
+    "unified": Path(
+        os.environ.get(
+            "REVDICT_UNIFIED_CHECKPOINT",
+            REPO_DIR.parent / "saved_models" / "unifiedRevdicDefmod" / "model_v1.pt",
+        )
+    ).resolve(),
+    "multird": Path(
+        os.environ.get(
+            "REVDICT_MULTIRD_CHECKPOINT",
+            REPO_DIR.parent / "saved_models" / "MultiRD" / "model_v1.pt",
+        )
+    ).resolve(),
+}
+MULTIRD_SPACE_CONFIG_BY_ENCODER = {
+    "defgen2": Path(
+        os.environ.get(
+            "REVDICT_DEFGEN2_CONFIG",
+            REPO_DIR.parent / "saved_models" / "DefGen2" / "config_v1.json",
+        )
+    ).resolve(),
+    "unified": Path(
+        os.environ.get(
+            "REVDICT_UNIFIED_CONFIG",
+            REPO_DIR.parent / "saved_models" / "unifiedRevdicDefmod" / "config_v1.json",
+        )
+    ).resolve(),
+    "multird": Path(
+        os.environ.get(
+            "REVDICT_MULTIRD_CONFIG",
+            REPO_DIR.parent / "saved_models" / "MultiRD" / "config_v1.json",
+        )
+    ).resolve(),
+}
+
 
 def _pick_data_path() -> Path:
     candidates = [
@@ -160,7 +212,7 @@ class QueryRequest(BaseModel):
         "sbert-infonce",
         description=(
             "sentence-transformer | sbert-infonce | bert-cls | "
-            "bilstm | bilstm_attn"
+            "bilstm | bilstm_attn | defgen2 | unified | multird"
         ),
     )
     top_k: int = Field(DEFAULT_TOP_K, ge=1, le=MAX_TOP_K)
@@ -185,6 +237,7 @@ class QueryResponse(BaseModel):
 # pipeline train-definition index, so the demo follows the same retrieval setup.
 
 _neural_state: dict[str, dict] = {}
+_multird_space_state: dict[str, dict] = {}
 
 
 class BilstmDemoEncoder:
@@ -487,6 +540,51 @@ def _query_shared_pipeline(
     return pd.DataFrame(rows), state["predictor_name"]
 
 
+def _load_multird_space_encoder_state(encoder_name: str) -> dict:
+    if encoder_name in _multird_space_state:
+        return _multird_space_state[encoder_name]
+
+    checkpoint_path = MULTIRD_SPACE_CHECKPOINT_BY_ENCODER[encoder_name]
+    config_path = MULTIRD_SPACE_CONFIG_BY_ENCODER[encoder_name]
+    if not checkpoint_path.exists():
+        raise HTTPException(status_code=503, detail=f"Missing checkpoint: {checkpoint_path}")
+    if not MULTIRD_SPACE_DATA_DIR.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing MultiRD data directory: {MULTIRD_SPACE_DATA_DIR}",
+        )
+
+    try:
+        from multird_space_encoder import MultiRDSpaceDemoEncoder
+    except ImportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    print(f"Loading {encoder_name} checkpoint: {checkpoint_path}")
+    encoder = MultiRDSpaceDemoEncoder(
+        encoder_name=encoder_name,
+        data_dir=MULTIRD_SPACE_DATA_DIR,
+        checkpoint_path=checkpoint_path,
+        config_path=config_path,
+        device=os.environ.get("REVDICT_DEVICE") or None,
+    )
+    state = {"encoder": encoder}
+    _multird_space_state[encoder_name] = state
+    return state
+
+
+def _query_multird_space_pipeline(
+    encoder_name: str,
+    text: str,
+    top_k: int,
+) -> tuple[pd.DataFrame, str]:
+    state = _load_multird_space_encoder_state(encoder_name)
+    rows = state["encoder"].query(text, top_k)
+    df = pd.DataFrame(rows).rename(
+        columns={"word": "word_original", "definition": "definition_original"}
+    )
+    return df, "checkpoint-mlp"
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -591,6 +689,36 @@ def list_encoders():
                 ),
                 "predictor": "checkpoint-mlp",
             },
+            {
+                "id": "defgen2",
+                "label": "DefGen2 (MultiRD-trained)",
+                "available": (
+                    torch_available
+                    and MULTIRD_SPACE_DATA_DIR.exists()
+                    and MULTIRD_SPACE_CHECKPOINT_BY_ENCODER["defgen2"].exists()
+                ),
+                "predictor": "checkpoint-mlp",
+            },
+            {
+                "id": "unified",
+                "label": "unifiedRevdicDefmod (MultiRD-trained)",
+                "available": (
+                    torch_available
+                    and MULTIRD_SPACE_DATA_DIR.exists()
+                    and MULTIRD_SPACE_CHECKPOINT_BY_ENCODER["unified"].exists()
+                ),
+                "predictor": "checkpoint-mlp",
+            },
+            {
+                "id": "multird",
+                "label": "MultiRD (MultiRD-trained)",
+                "available": (
+                    torch_available
+                    and MULTIRD_SPACE_DATA_DIR.exists()
+                    and MULTIRD_SPACE_CHECKPOINT_BY_ENCODER["multird"].exists()
+                ),
+                "predictor": "checkpoint-mlp",
+            },
         ]
     }
 
@@ -613,12 +741,19 @@ def query(request: QueryRequest):
             request.top_k,
         )
         word_col = "word_original"
+    elif encoder_name in ("defgen2", "unified", "multird"):
+        results_df, predictor_name = _query_multird_space_pipeline(
+            encoder_name,
+            request.text,
+            request.top_k,
+        )
+        word_col = "word_original"
     else:
         raise HTTPException(
             status_code=400,
             detail=(
                 "encoder must be one of: sentence-transformer, sbert-infonce, "
-                "bert-cls, bilstm, bilstm_attn"
+                "bert-cls, bilstm, bilstm_attn, defgen2, unified, multird"
             ),
         )
 
