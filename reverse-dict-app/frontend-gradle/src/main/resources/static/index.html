@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reverse Dictionary</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <main class="container">
+        <h1>Reverse Dictionary</h1>
+        <p class="subtitle">Describe a word. We'll guess it.</p>
+
+        <form id="query-form" class="query-form">
+            <label for="query-text">Definition / description</label>
+            <textarea
+                id="query-text"
+                rows="3"
+                placeholder="e.g. a large gray animal with a trunk"
+                required
+            ></textarea>
+
+            <div class="controls-row">
+                <div class="control">
+                    <label for="encoder-select">Encoder</label>
+                    <select id="encoder-select">
+                        <option value="sentence-transformer" selected>Sentence-Transformer</option>
+                        <option value="bert-cls">BERT [CLS]</option>
+                        <option value="bilstm">BiLSTM</option>
+                        <option value="bilstm_attn">BiLSTM + Attention</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label for="topk-select">Results</label>
+                    <select id="topk-select">
+                        <option value="10" selected>Top 10</option>
+                        <option value="100">Top 100</option>
+                        <option value="custom">Custom&hellip;</option>
+                    </select>
+                </div>
+
+                <div class="control" id="custom-topk-wrap" hidden>
+                    <label for="topk-custom">Custom count</label>
+                    <input type="number" id="topk-custom" min="1" max="500" value="25" />
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn">Search</button>
+        </form>
+
+        <p id="status" class="status" aria-live="polite"></p>
+
+        <table id="results-table" class="results-table" hidden>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Word</th>
+                    <th>Score</th>
+                    <th>Definition</th>
+                </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+        </table>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

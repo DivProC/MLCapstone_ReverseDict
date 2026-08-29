@@ -22,5 +22,6 @@
   "score_batch_size": 16,
   "max_train_rows": 0,
   "max_eval_rows": 0,
-  "plan_only": false
+  "plan_only": false,
+  "predictor_artifact": "results\\shared_pipeline\\sbert_mlp_infonce_test_predictor.pt"
 }

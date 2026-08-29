@@ -1,0 +1,145 @@
+:root {
+    --ink: #1b1b1f;
+    --muted: #6b6b76;
+    --line: #e2e2e8;
+    --accent: #2f5bff;
+    --bg: #fafafa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+h1 {
+    margin: 0 0 4px;
+    font-size: 1.9rem;
+}
+
+.subtitle {
+    margin: 0 0 28px;
+    color: var(--muted);
+}
+
+.query-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+}
+
+textarea, select, input[type="number"] {
+    width: 100%;
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ink);
+}
+
+textarea:focus, select:focus, input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.controls-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.control {
+    flex: 1;
+    min-width: 160px;
+}
+
+button#submit-btn {
+    align-self: flex-start;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button#submit-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+button#submit-btn:hover:not(:disabled) {
+    background: #2247d6;
+}
+
+.status {
+    min-height: 1.2em;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.status.error {
+    color: #c53030;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.results-table th, .results-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.92rem;
+    vertical-align: top;
+}
+
+.results-table th {
+    background: #f2f3f8;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.results-table tr:last-child td {
+    border-bottom: none;
+}
+
+.results-table td.word {
+    font-weight: 600;
+}
+
+.results-table td.score {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}

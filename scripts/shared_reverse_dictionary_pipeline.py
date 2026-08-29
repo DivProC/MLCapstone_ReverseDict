@@ -103,9 +103,16 @@ class TorchMlpInfoNcePredictor:
 
         self.torch = torch
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
         self.epochs = epochs
         self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
         self.temperature = temperature
+        self.seed = seed
 
         torch.manual_seed(seed)
         self.model = torch.nn.Sequential(
@@ -186,6 +193,57 @@ class TorchMlpInfoNcePredictor:
                 )
                 outputs.append(self.model(batch).cpu().numpy().astype(np.float32))
         return np.vstack(outputs)
+
+    def save(self, path: Path, extra_config: dict | None = None) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "predictor_config": {
+                    "input_dim": self.input_dim,
+                    "output_dim": self.output_dim,
+                    "hidden_dim": self.hidden_dim,
+                    "dropout": self.dropout,
+                    "epochs": self.epochs,
+                    "batch_size": self.batch_size,
+                    "learning_rate": self.learning_rate,
+                    "weight_decay": self.weight_decay,
+                    "temperature": self.temperature,
+                    "seed": self.seed,
+                },
+                "run_config": extra_config or {},
+            },
+            path,
+        )
+
+    @classmethod
+    def load(cls, path: Path, device: str | None = None) -> "TorchMlpInfoNcePredictor":
+        try:
+            import torch
+        except ImportError as exc:
+            raise ImportError(
+                "torch is not installed. Install it before loading an InfoNCE predictor."
+            ) from exc
+
+        load_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint = torch.load(path, map_location=load_device)
+        config = checkpoint["predictor_config"]
+        predictor = cls(
+            input_dim=int(config["input_dim"]),
+            output_dim=int(config["output_dim"]),
+            hidden_dim=int(config["hidden_dim"]),
+            dropout=float(config["dropout"]),
+            epochs=int(config.get("epochs", 1)),
+            batch_size=int(config.get("batch_size", 256)),
+            learning_rate=float(config.get("learning_rate", 1e-3)),
+            weight_decay=float(config.get("weight_decay", 1e-4)),
+            temperature=float(config.get("temperature", 0.05)),
+            seed=int(config.get("seed", RANDOM_SEED)),
+            device=load_device,
+        )
+        predictor.model.load_state_dict(checkpoint["model_state_dict"])
+        predictor.model.eval()
+        return predictor
 
 
 def read_processed_csv(path: Path) -> pd.DataFrame:
@@ -609,6 +667,7 @@ def save_outputs(
     per_query_df: pd.DataFrame,
     sample_df: pd.DataFrame,
     split_summary: pd.DataFrame,
+    predictor=None,
 ) -> None:
     results_dir = Path(args.results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -620,6 +679,12 @@ def save_outputs(
     split_summary.to_csv(results_dir / f"{run_name}_split_summary.csv", index=False)
 
     config = vars(args).copy()
+    predictor_path = None
+    if predictor is not None and hasattr(predictor, "save"):
+        predictor_path = results_dir / f"{run_name}_predictor.pt"
+        predictor.save(predictor_path, extra_config=config)
+
+    config["predictor_artifact"] = str(predictor_path) if predictor_path else ""
     (results_dir / f"{run_name}_config.json").write_text(
         json.dumps(config, indent=2),
         encoding="utf-8",
@@ -750,6 +815,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         per_query_df=per_query_df,
         sample_df=sample_df,
         split_summary=split_data.split_summary,
+        predictor=predictor,
     )
 
     print(metrics_df.to_string(index=False))
