@@ -16,14 +16,16 @@ Run a Sentence-BERT encoder once dependencies are installed:
     python scripts/shared_reverse_dictionary_pipeline.py \
         --encoder sentence-transformer \
         --model-name sentence-transformers/all-MiniLM-L6-v2 \
+        --predictor none \
         --split-mode by-definition \
         --eval-split test
 
-Run Viswa's BERT CLS encoder path:
+Run BERT CLS encoder path with the shared predictor:
 
     python scripts/shared_reverse_dictionary_pipeline.py \
         --encoder bert-cls \
         --model-name bert-base-uncased \
+        --predictor torch-mlp-infonce \
         --split-mode by-definition \
         --eval-split test
 """
@@ -76,15 +78,18 @@ class TargetIndex:
     definition_to_words: dict[str, set[str]]
 
 
-class TorchLinearProjection:
+class TorchMlpInfoNcePredictor:
     def __init__(
         self,
         input_dim: int,
         output_dim: int,
+        hidden_dim: int,
+        dropout: float,
         epochs: int,
         batch_size: int,
         learning_rate: float,
         weight_decay: float,
+        temperature: float,
         seed: int,
         device: str | None,
     ):
@@ -93,28 +98,39 @@ class TorchLinearProjection:
         except ImportError as exc:
             raise ImportError(
                 "torch is not installed. Install it before using "
-                "--predictor torch-linear."
+                "--predictor torch-mlp-infonce."
             ) from exc
 
         self.torch = torch
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
+        self.temperature = temperature
 
         torch.manual_seed(seed)
-        self.model = torch.nn.Linear(input_dim, output_dim).to(self.device)
+        self.model = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, hidden_dim),
+            torch.nn.GELU(),
+            torch.nn.Dropout(dropout),
+            torch.nn.Linear(hidden_dim, output_dim),
+        ).to(self.device)
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
             lr=learning_rate,
             weight_decay=weight_decay,
         )
-        self.loss_fn = torch.nn.MSELoss()
 
-    def fit(self, x: np.ndarray, y: np.ndarray) -> "TorchLinearProjection":
+    def fit(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        word_ids: np.ndarray,
+    ) -> "TorchMlpInfoNcePredictor":
         torch = self.torch
         x_tensor = torch.tensor(x, dtype=torch.float32)
         y_tensor = torch.tensor(y, dtype=torch.float32)
-        dataset = torch.utils.data.TensorDataset(x_tensor, y_tensor)
+        word_id_tensor = torch.tensor(word_ids, dtype=torch.long)
+        dataset = torch.utils.data.TensorDataset(x_tensor, y_tensor, word_id_tensor)
         loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -125,13 +141,26 @@ class TorchLinearProjection:
         for epoch in range(1, self.epochs + 1):
             total_loss = 0.0
             total_rows = 0
-            for batch_x, batch_y in loader:
+            for batch_x, batch_y, batch_word_ids in loader:
                 batch_x = batch_x.to(self.device)
                 batch_y = batch_y.to(self.device)
+                batch_word_ids = batch_word_ids.to(self.device)
 
                 self.optimizer.zero_grad()
                 predictions = self.model(batch_x)
-                loss = self.loss_fn(predictions, batch_y)
+                predictions = torch.nn.functional.normalize(predictions, dim=1)
+                targets = torch.nn.functional.normalize(batch_y, dim=1)
+
+                logits = predictions @ targets.T
+                logits = logits / self.temperature
+
+                batch_size = len(batch_x)
+                same_word = batch_word_ids[:, None] == batch_word_ids[None, :]
+                diagonal = torch.eye(batch_size, dtype=torch.bool, device=self.device)
+                logits = logits.masked_fill(same_word & ~diagonal, -1e9)
+
+                labels = torch.arange(batch_size, device=self.device)
+                loss = torch.nn.functional.cross_entropy(logits, labels)
                 loss.backward()
                 self.optimizer.step()
 
@@ -139,7 +168,7 @@ class TorchLinearProjection:
                 total_rows += len(batch_x)
 
             print(
-                f"projection epoch {epoch}/{self.epochs} - "
+                f"infonce epoch {epoch}/{self.epochs} - "
                 f"loss {total_loss / max(total_rows, 1):.6f}"
             )
         return self
@@ -363,18 +392,21 @@ def train_predictor(
         predictor.fit(train_embeddings, target_embeddings)
         return predictor
 
-    if predictor_name == "torch-linear":
-        predictor = TorchLinearProjection(
+    if predictor_name == "torch-mlp-infonce":
+        predictor = TorchMlpInfoNcePredictor(
             input_dim=train_embeddings.shape[1],
             output_dim=target_embeddings.shape[1],
+            hidden_dim=args.mlp_hidden_dim,
+            dropout=args.dropout,
             epochs=args.projection_epochs,
             batch_size=args.projection_batch_size,
             learning_rate=args.learning_rate,
             weight_decay=args.weight_decay,
+            temperature=args.temperature,
             seed=args.random_seed,
             device=args.device,
         )
-        return predictor.fit(train_embeddings, target_embeddings)
+        return predictor.fit(train_embeddings, target_embeddings, target_ids)
 
     raise ValueError(f"Unknown predictor: {predictor_name}")
 
@@ -426,6 +458,33 @@ def tie_averaged_rank(word_scores: np.ndarray, correct_word_ids: list[int]) -> f
     return float(best_rank)
 
 
+def tie_aware_recall_at_k(
+    word_scores: np.ndarray,
+    correct_word_ids: list[int],
+    k: int,
+) -> float:
+    if not correct_word_ids:
+        return 0.0
+
+    recall_credit = 0.0
+    for word_id in correct_word_ids:
+        score = word_scores[word_id]
+        higher_count = int(np.sum(word_scores > score))
+        tied_count = int(np.sum(word_scores == score))
+        slots_left = k - higher_count
+
+        if slots_left <= 0:
+            credit = 0.0
+        elif slots_left >= tied_count:
+            credit = 1.0
+        else:
+            credit = slots_left / tied_count
+
+        recall_credit += credit
+
+    return float(recall_credit / len(correct_word_ids))
+
+
 def top_predictions(
     word_scores: np.ndarray,
     candidate_words: list[str],
@@ -465,6 +524,9 @@ def evaluate_queries(
 
             correct_ids = correct_word_ids_for_query(row, target_index)
             rank = tie_averaged_rank(word_scores, correct_ids)
+            recall_at_1 = tie_aware_recall_at_k(word_scores, correct_ids, 1)
+            recall_at_10 = tie_aware_recall_at_k(word_scores, correct_ids, 10)
+            recall_at_100 = tie_aware_recall_at_k(word_scores, correct_ids, 100)
             predictions = top_predictions(
                 word_scores,
                 target_index.candidate_words,
@@ -480,9 +542,9 @@ def evaluate_queries(
                 "candidate_pool_size": candidate_pool_size,
                 "num_correct_words_in_pool": len(correct_ids),
                 "tie_averaged_rank": rank,
-                "recall_at_1": rank <= 1,
-                "recall_at_10": rank <= 10,
-                "recall_at_100": rank <= 100,
+                "recall_at_1": recall_at_1,
+                "recall_at_10": recall_at_10,
+                "recall_at_100": recall_at_100,
             }
             rows.append(result_row)
 
@@ -526,6 +588,7 @@ def summarize_metrics(
                 "encoder": encoder,
                 "model_name": model_name,
                 "predictor": predictor,
+                "metric_family": "tie_aware_recall_at_k",
                 "num_queries": len(group_df),
                 "queries_with_candidate_answer": int(
                     (group_df["num_correct_words_in_pool"] > 0).sum()
@@ -726,16 +789,20 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--device", default=None)
     parser.add_argument(
         "--predictor",
-        choices=["ridge", "torch-linear", "none"],
-        default="ridge",
+        choices=["ridge", "torch-mlp-infonce", "none"],
+        default="none",
         help=(
-            "ridge is a trained linear projection using sklearn; torch-linear "
-            "is a small neural projection layer; none is retrieval-only baseline."
+            "none is retrieval-only baseline; torch-mlp-infonce is the shared "
+            "trained predictor for fair encoder comparisons; ridge is a quick "
+            "linear diagnostic."
         ),
     )
     parser.add_argument("--ridge-alpha", type=float, default=1.0)
     parser.add_argument("--projection-epochs", type=int, default=5)
     parser.add_argument("--projection-batch-size", type=int, default=256)
+    parser.add_argument("--mlp-hidden-dim", type=int, default=512)
+    parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--temperature", type=float, default=0.05)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument(
@@ -743,7 +810,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help=(
             "Use opted_train_augmented_basic.csv as extra predictor-training data. "
-            "The target index and evaluation splits remain clean."
+            "Leave this off for the controlled comparison."
         ),
     )
     parser.add_argument("--random-seed", type=int, default=RANDOM_SEED)
