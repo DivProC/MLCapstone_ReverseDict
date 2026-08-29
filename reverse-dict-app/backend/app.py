@@ -4,8 +4,8 @@ Reverse Dictionary backend API.
 Serves a small REST API on localhost. The same FastAPI service also serves the
 static demo page, so Java/Gradle is not needed for the local demo.
 
-  - "sentence-transformer" -> sentence_transformer_encoder.py (needs the
-                              `sentence-transformers` package)
+  - "sentence-transformer" -> plain SBERT retrieval
+  - "sbert-infonce"        -> SBERT plus saved InfoNCE predictor
   - "bert-cls"             -> bert_cls.py (needs `torch` + `transformers`)
   - "bilstm"               -> trained BiLSTM checkpoint
   - "bilstm_attn"          -> trained BiLSTM + attention checkpoint
@@ -16,7 +16,7 @@ Run:
 
 Endpoints:
     GET  /api/encoders            -> which encoders are available right now
-    POST /api/query                {"text": "...", "encoder": "sentence-transformer", "top_k": 10}
+    POST /api/query                {"text": "...", "encoder": "sbert-infonce", "top_k": 10}
     GET  /api/health
 """
 
@@ -59,7 +59,7 @@ MAX_TOP_K = 500
 ENCODE_BATCH_SIZE = int(os.environ.get("REVDICT_ENCODE_BATCH_SIZE", "64"))
 BILSTM_MAX_LEN = int(os.environ.get("REVDICT_BILSTM_MAX_LEN", "64"))
 PREDICTOR_PATH_BY_ENCODER = {
-    "sentence-transformer": Path(
+    "sbert-infonce": Path(
         os.environ.get(
             "REVDICT_SBERT_PREDICTOR_PATH",
             REPO_DIR
@@ -157,8 +157,11 @@ app.add_middleware(
 class QueryRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Definition-style query text")
     encoder: str = Field(
-        "sentence-transformer",
-        description="sentence-transformer | bert-cls | bilstm | bilstm_attn",
+        "sbert-infonce",
+        description=(
+            "sentence-transformer | sbert-infonce | bert-cls | "
+            "bilstm | bilstm_attn"
+        ),
     )
     top_k: int = Field(DEFAULT_TOP_K, ge=1, le=MAX_TOP_K)
 
@@ -299,9 +302,22 @@ def _predictor_path_for_encoder(encoder_name: str) -> Path | None:
     return PREDICTOR_PATH_BY_ENCODER.get(encoder_name)
 
 
-def _load_predictor_for_encoder(encoder_name: str):
+def _load_predictor_for_encoder(encoder_name: str, required: bool = False):
     predictor_path = _predictor_path_for_encoder(encoder_name)
-    if predictor_path is None or not predictor_path.exists():
+    if predictor_path is None:
+        if required:
+            raise HTTPException(
+                status_code=503,
+                detail=f"No predictor path is configured for {encoder_name}.",
+            )
+        return None
+
+    if not predictor_path.exists():
+        if required:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Missing predictor checkpoint: {predictor_path}",
+            )
         return None
 
     try:
@@ -322,30 +338,34 @@ def _load_predictor_for_encoder(encoder_name: str):
 def _load_shared_encoder_state(encoder_name: str):
     if encoder_name in _neural_state:
         state = _neural_state[encoder_name]
-        if state["predictor"] is None:
-            predictor = _load_predictor_for_encoder(encoder_name)
+        if encoder_name == "sbert-infonce" and state["predictor"] is None:
+            predictor = _load_predictor_for_encoder(encoder_name, required=True)
             if predictor is not None:
                 state["predictor"] = predictor
                 state["predictor_name"] = "mlp-infonce"
         return state
 
-    if encoder_name == "sentence-transformer":
+    base_encoder_name = (
+        "sentence-transformer" if encoder_name == "sbert-infonce" else encoder_name
+    )
+
+    if base_encoder_name == "sentence-transformer":
         model_name = os.environ.get(
             "REVDICT_ST_MODEL",
             shared_pipeline.DEFAULT_MODEL_BY_ENCODER["sentence-transformer"],
         )
-    elif encoder_name == "bert-cls":
+    elif base_encoder_name == "bert-cls":
         model_name = os.environ.get(
             "REVDICT_BERT_MODEL",
             shared_pipeline.DEFAULT_MODEL_BY_ENCODER["bert-cls"],
         )
-    elif encoder_name in ("bilstm", "bilstm_attn"):
+    elif base_encoder_name in ("bilstm", "bilstm_attn"):
         model_name = encoder_name
     else:
         raise HTTPException(status_code=400, detail=f"Unknown encoder: {encoder_name}")
 
     device = os.environ.get("REVDICT_DEVICE") or None
-    if encoder_name in ("bilstm", "bilstm_attn"):
+    if base_encoder_name in ("bilstm", "bilstm_attn"):
         if not BILSTM_VOCAB_PATH.exists():
             raise HTTPException(
                 status_code=503,
@@ -364,7 +384,7 @@ def _load_shared_encoder_state(encoder_name: str):
     else:
         try:
             encoder = shared_pipeline.make_encoder(
-                encoder_name=encoder_name,
+                encoder_name=base_encoder_name,
                 model_name=model_name,
                 device=device,
             )
@@ -374,7 +394,7 @@ def _load_shared_encoder_state(encoder_name: str):
     _, target_index = _load_shared_index()
     index_text_column = (
         "definition_model_input"
-        if encoder_name in ("bilstm", "bilstm_attn")
+        if base_encoder_name in ("bilstm", "bilstm_attn")
         and "definition_model_input" in target_index.candidate_df.columns
         else shared_pipeline.TEXT_COLUMN
     )
@@ -383,7 +403,7 @@ def _load_shared_encoder_state(encoder_name: str):
         f"Encoding {len(index_texts):,} shared candidate definitions "
         f"with {encoder_name} ..."
     )
-    if encoder_name in ("bilstm", "bilstm_attn"):
+    if base_encoder_name in ("bilstm", "bilstm_attn"):
         candidate_embeddings = encoder.encode_index(index_texts, ENCODE_BATCH_SIZE)
     else:
         candidate_embeddings = encoder.encode(index_texts, ENCODE_BATCH_SIZE)
@@ -395,8 +415,12 @@ def _load_shared_encoder_state(encoder_name: str):
     ).astype(np.float32)
     predictor = (
         None
-        if encoder_name in ("bilstm", "bilstm_attn")
-        else _load_predictor_for_encoder(encoder_name)
+        if base_encoder_name in ("bilstm", "bilstm_attn", "sentence-transformer")
+        and encoder_name != "sbert-infonce"
+        else _load_predictor_for_encoder(
+            encoder_name,
+            required=encoder_name == "sbert-infonce",
+        )
     )
 
     state = {
@@ -405,7 +429,7 @@ def _load_shared_encoder_state(encoder_name: str):
         "predictor": predictor,
         "predictor_name": (
             "checkpoint-mlp"
-            if encoder_name in ("bilstm", "bilstm_attn")
+            if base_encoder_name in ("bilstm", "bilstm_attn")
             else "mlp-infonce"
             if predictor is not None
             else "none"
@@ -482,11 +506,9 @@ def health():
         "shared_index_loaded": _target_index is not None,
         "train_rows": train_rows,
         "candidate_words": candidate_words,
-        "default_encoder": "sentence-transformer",
-        "sbert_predictor_path": str(PREDICTOR_PATH_BY_ENCODER["sentence-transformer"]),
-        "sbert_predictor_available": PREDICTOR_PATH_BY_ENCODER[
-            "sentence-transformer"
-        ].exists(),
+        "default_encoder": "sbert-infonce",
+        "sbert_predictor_path": str(PREDICTOR_PATH_BY_ENCODER["sbert-infonce"]),
+        "sbert_predictor_available": PREDICTOR_PATH_BY_ENCODER["sbert-infonce"].exists(),
     }
 
 
@@ -521,17 +543,19 @@ def list_encoders():
         "encoders": [
             {
                 "id": "sentence-transformer",
-                "label": (
-                    "Sentence-Transformer + InfoNCE"
-                    if PREDICTOR_PATH_BY_ENCODER["sentence-transformer"].exists()
-                    else "Sentence-Transformer"
-                ),
+                "label": "SBERT",
                 "available": _installed("sentence_transformers"),
-                "predictor": (
-                    "mlp-infonce"
-                    if PREDICTOR_PATH_BY_ENCODER["sentence-transformer"].exists()
-                    else "none"
+                "predictor": "none",
+            },
+            {
+                "id": "sbert-infonce",
+                "label": "SBERT + InfoNCE",
+                "available": (
+                    _installed("sentence_transformers")
+                    and _installed("torch")
+                    and PREDICTOR_PATH_BY_ENCODER["sbert-infonce"].exists()
                 ),
+                "predictor": "mlp-infonce",
             },
             {
                 "id": "bert-cls",
@@ -576,7 +600,13 @@ def query(request: QueryRequest):
     started = time.perf_counter()
     encoder_name = request.encoder.strip().lower()
 
-    if encoder_name in ("sentence-transformer", "bert-cls", "bilstm", "bilstm_attn"):
+    if encoder_name in (
+        "sentence-transformer",
+        "sbert-infonce",
+        "bert-cls",
+        "bilstm",
+        "bilstm_attn",
+    ):
         results_df, predictor_name = _query_shared_pipeline(
             encoder_name,
             request.text,
@@ -587,8 +617,8 @@ def query(request: QueryRequest):
         raise HTTPException(
             status_code=400,
             detail=(
-                "encoder must be one of: sentence-transformer, bert-cls, "
-                "bilstm, bilstm_attn"
+                "encoder must be one of: sentence-transformer, sbert-infonce, "
+                "bert-cls, bilstm, bilstm_attn"
             ),
         )
 
